@@ -17,7 +17,7 @@
 import os
 import time
 
-import urllib.request as URLRequest
+import urllib.request
 
 from backend.action.Action import Action
 from backend.util.Settings import Settings
@@ -32,6 +32,9 @@ class ActionUpdateCalendar(Action):
         self.__destinationURL = self.getSettingFilename("destination_url", "frontend/data/calendar.ics")
         self.__calendarUpdateDuration = self.getSettingInt("calendar_update_duration", 120 * 60) # every 2 hours
         self.__timeout = self.getSettingInt("timeout", 5)
+
+        self.__username = self.getSettingString("username", "")
+        self.__password = self.getSettingString("password", "")
 
         self.__lastUpdateTimestamp = 0.0
 
@@ -49,19 +52,26 @@ class ActionUpdateCalendar(Action):
     def updateCalendar(self) -> None:
         self.__lastUpdateTimestamp = time.time()
 
-        if ActionUpdateCalendar.downloadFile(self.__sourceURL, self.__destinationURL, self.__timeout):
+        if ActionUpdateCalendar.downloadFile(self.__sourceURL, self.__destinationURL, self.__timeout, self.__username, self.__password):
             self.__webSocket.broadcastCalendarChanged() #TODO: only broadcast change if file (hash) changed
         else:
             self.error("Failed to update calendar")
 
     @staticmethod
-    def downloadFile(fromURL: str, toURL: str, timeout: int) -> bool:
+    def downloadFile(fromURL: str, toURL: str, timeout: int, username: str = "", password: str = "") -> bool:
         if not fromURL or not toURL:
             return False
 
         try:
+            if username and password:
+                passman = urllib.request.HTTPPasswordMgrWithDefaultRealm()
+                passman.add_password(None, fromURL, username, password)
+                authhandler = urllib.request.HTTPBasicAuthHandler(passman)
+                opener = urllib.request.build_opener(authhandler)
+                urllib.request.install_opener(opener)
+
             toURLtemp = toURL + ".tmp"
-            fIn = URLRequest.urlopen(fromURL, timeout=timeout)
+            fIn = urllib.request.urlopen(fromURL, timeout=timeout)
             data = fIn.read()
             with open(toURLtemp, "wb") as fOut:
                 fOut.write(data)
@@ -69,5 +79,5 @@ class ActionUpdateCalendar(Action):
             os.rename(toURLtemp, toURL) # atomically overwrite/replace previous file
 
             return True
-        except Exception:
+        except Exception as e:
             return False

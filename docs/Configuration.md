@@ -268,6 +268,8 @@ It is configured in the ```[action:update_calendar]``` section and has the follo
 | destination_url              | Destination filename of the calendar (ICS) file – should typically match the calendar_url setting in the frontend section but include a "frontend/" prefix        | "frontend/data/calendar.ics"  |
 | **calendar_update_duration** | Duration between two updates of the calendar (in seconds; 0 = never)                                                                                              | 120 * 60 seconds (2 hours)    |
 | timeout                      | Download Timeout (in seconds)                                                                                                                                     | 5 seconds                     |
+| username                     | Username for the calendar (ICS) file                                                                                                                              | "" (none)                     |
+| password                     | Password for the calendar (ICS) file                                                                                                                              | "" (none)                     |
 
 ### Send Message PowerAlarm Action (optional)
 The optional ```send_poweralarm``` action is responsible to forward an alarm message to emergency personnel via the commercial [PowerAlarm](https://www.poweralarm.de) service.
