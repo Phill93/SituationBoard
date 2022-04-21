@@ -1,6 +1,7 @@
 /*
 SituationBoard - Alarm Display for Fire Departments
 Copyright (C) 2017-2021 Sebastian Maier
+Copyright (C) 2022 Daniel Bacher
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
@@ -39,37 +40,34 @@ export default class CalendarWidget extends Widget {
             $.get(this.settings.calendarURL)
             .done(fileData => {
                 const data = ical.parseICS(fileData);
+                const data_sorted = Object.values(data).filter(e => e.type === "VEVENT").sort((a,b) => a.start - b.start);
+
 
                 let numEvents = 0;
-                let eventHTML = '';
                 const nowDate = moment();
 
-                for(const k in data){
-                    if(Object.prototype.hasOwnProperty.call(data, k)){
-                        const event = data[k];
-                        if(data[k].type == 'VEVENT'){
-                            const eventTitle = event.summary;
-                            const eventStartDate = moment(event.start);
-                            const eventEndDate = moment(event.end);
+                const eventHTML = data_sorted.map(event=>{
+                    const eventTitle = event.summary;
+                    const eventStartDate = moment(event.start);
+                    const eventEndDate = moment(event.end);
 
-                            if(typeof event.rrule === 'undefined'){
-                                // only show events that are in the future...
-                                if(eventStartDate >= nowDate || eventEndDate >= nowDate){
-                                    if(numEvents < this.settings.maxCalendarEntries){
-                                        numEvents++;
-                                        // create a list item
-                                        const eventDateString = eventStartDate.format(this.language.dateFormat + " – " + this.language.timeFormatShort);
-                                        const eventWeekday = this.language.weekdays[eventStartDate.day()];
-                                        eventHTML = eventHTML + '<li><h3>' + eventWeekday + ', ' + eventDateString + '</h3>' +
-                                                                '<p>' + eventTitle + '</p></li>';
-                                    }
-                                }
-                            }else if(typeof event.rrule !== 'undefined'){
-                                //TODO: handle recurring events
+                    if(typeof event.rrule === 'undefined'){
+                        // only show events that are in the future...
+                        if(eventStartDate >= nowDate || eventEndDate >= nowDate){
+                            if(numEvents < this.settings.maxCalendarEntries){
+                                numEvents++;
+                                // create a list item
+                                const eventDateString = eventStartDate.format(this.language.dateFormat + " – " + this.language.timeFormatShort);
+                                const eventWeekday = this.language.weekdays[eventStartDate.day()];
+                                return '<li><h3>' + eventWeekday + ', ' + eventDateString + '</h3>' +
+                                                        '<p>' + eventTitle + '</p></li>';
                             }
                         }
+                    }else if(typeof event.rrule !== 'undefined'){
+                        //TODO: handle recurring events
+                        return '';
                     }
-                }
+                }).join('');
 
                 if(numEvents != 0){
                     $('#calendarevents').html('<ul>' + eventHTML + '</ul>');
