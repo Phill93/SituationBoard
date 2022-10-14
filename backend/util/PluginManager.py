@@ -167,6 +167,9 @@ class PluginManager(Module):
                 elif action == "write_file":
                     actionModule = importlib.import_module("backend.action.ActionWriteFile")
                     actionPlugin = actionModule.ActionWriteFile(instanceName, self.__settings) # type: ignore
+                elif action == "web_request":
+                    actionModule = importlib.import_module("backend.action.ActionWebRequest")
+                    actionPlugin = actionModule.ActionWebRequest(instanceName, self.__settings) # type: ignore
                 else:
                     self.fatal(f"Invalid action plugin {action}")
 
